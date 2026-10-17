@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Construction Product Enquiries</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="flex-1 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 w-full max-w-md transition-all">
+            <!-- Header & Logo -->
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 text-amber-600 mb-3 text-2xl">
+                    <i class="fa-solid fa-helmet-safety"></i>
+                </div>
+                <h2 class="text-2xl font-black tracking-tight text-slate-900">Admin Portal</h2>
+                <p class="text-sm text-slate-500 mt-1">Construction Product Enquiry System</p>
+            </div>
+
+            <!-- Dynamic Alert Box -->
+            <div id="loginAlert" class="hidden mb-4 p-3 rounded-xl text-sm font-medium flex items-start gap-2.5">
+                <i id="loginAlertIcon" class="fa-solid fa-circle-exclamation mt-0.5"></i>
+                <span id="loginAlertText" class="flex-1"></span>
+            </div>
+
+            <!-- Login Form -->
+            <form onsubmit="loginAdmin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1" for="adminUser">Username</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                            <i class="fa-solid fa-user text-sm"></i>
+                        </span>
+                        <input type="text" id="adminUser" required placeholder="admin"
+                            class="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition bg-slate-50/50 focus:bg-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1" for="adminPass">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                            <i class="fa-solid fa-lock text-sm"></i>
+                        </span>
+                        <input type="password" id="adminPass" required placeholder="••••••••••••"
+                            class="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition bg-slate-50/50 focus:bg-white">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="loginBtn"
+                        class="w-full bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-amber-600/20 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>Login to Dashboard</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Test Credentials Hint -->
+            <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+                <span class="inline-block text-xs text-slate-400 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+                    Default: <b class="text-slate-700">admin</b> / <b class="text-slate-700">adminpassword123</b>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel Screen (Initially Hidden) -->
+    <div id="adminPanel" class="hidden flex-1 flex flex-col">
+        <!-- Top Navigation -->
+        <header class="bg-slate-900 text-white py-4 px-6 shadow-md sticky top-0 z-30 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-amber-500 flex items-center justify-center text-slate-900 font-bold">
+                    <i class="fa-solid fa-trowel-bricks"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black tracking-tight leading-none">Construction Admin</h1>
+                    <span class="text-xs text-slate-400">Authenticated as <b id="activeAdminUser" class="text-amber-400">admin</b></span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+                <a href="index.html" target="_blank"
+                    class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2 px-3 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span class="hidden sm:inline">View Site</span>
+                </a>
+                <button onclick="loadEnquiries()" title="Refresh Enquiries"
+                    class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2 px-3 rounded-lg border border-slate-700 transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span class="hidden sm:inline">Refresh</span>
+                </button>
+                <button onclick="logout()"
+                    class="bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-xs font-bold py-2 px-3 rounded-lg shadow-sm transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-power-off"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 w-full grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Add Product Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
+                <div class="flex items-center gap-2.5 mb-4 pb-3 border-b border-slate-100">
+                    <i class="fa-solid fa-boxes-stacked text-amber-600 text-lg"></i>
+                    <h3 class="font-bold text-slate-900 text-base">Add Product & Upload Photo</h3>
+                </div>
+
+                <form id="productForm" onsubmit="uploadProduct(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Product Title</label>
+                        <input type="text" id="pTitle" required placeholder="e.g. Premium Red Bricks"
+                            class="w-full border border-slate-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Category</label>
+                        <select id="pCategory" class="w-full border border-slate-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-white">
+                            <option value="brick">Bricks / Blocks</option>
+                            <option value="cheera">Cheera (Laterite Stone)</option>
+                            <option value="general">Aggregates / Other</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Description</label>
+                        <textarea id="pDesc" required rows="3" placeholder="Dimensions, load-bearing strength, batch details..."
+                            class="w-full border border-slate-300 p-2.5 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Product Photo</label>
+                        <input type="file" id="pImage" accept="image/*" required
+                            class="w-full border border-slate-300 p-2 rounded-lg text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100 cursor-pointer">
+                    </div>
+
+                    <button type="submit" id="productSubmitBtn"
+                        class="w-full bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-bold py-2.5 px-4 rounded-lg text-sm shadow transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload & Save Product</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Customer Enquiries Table -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-inbox text-amber-600 text-lg"></i>
+                        <h3 class="font-bold text-slate-900 text-base">Customer Enquiries</h3>
+                    </div>
+                    <span id="enquiryCount" class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-0.5 rounded-full">
+                        0 enquiries
+                    </span>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider">
+                                <th class="p-3">Customer</th>
+                                <th class="p-3">Product</th>
+                                <th class="p-3">Specs</th>
+                                <th class="p-3">Delivery Address</th>
+                                <th class="p-3 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="enquiryTable" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="5" class="p-8 text-center text-slate-400">
+                                    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading customer enquiries...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script>
+// Check session on page load
+window.addEventListener('DOMContentLoaded', () => {
+    if (sessionStorage.getItem('admin_logged_in') === 'true') {
+        showAdminPanel();
+    }
+});
+
+function showLoginAlert(message, type = 'error') {
+    const alertBox = document.getElementById('loginAlert');
+    const alertText = document.getElementById('loginAlertText');
+    const alertIcon = document.getElementById('loginAlertIcon');
+
+    alertBox.className = "mb-4 p-3 rounded-xl text-sm font-medium flex items-start gap-2.5 transition animate-fade-in";
+    if (type === 'error') {
+        alertBox.classList.add('bg-rose-50', 'text-rose-700', 'border', 'border-rose-200');
+        alertIcon.className = 'fa-solid fa-triangle-exclamation mt-0.5 text-rose-500';
+    } else {
+        alertBox.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+        alertIcon.className = 'fa-solid fa-circle-check mt-0.5 text-emerald-500';
+    }
+    alertText.textContent = message;
+    alertBox.classList.remove('hidden');
+}
+
+function hideLoginAlert() {
+    document.getElementById('loginAlert').classList.add('hidden');
+}
+
+function showAdminPanel() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    const panel = document.getElementById('adminPanel');
+    panel.classList.remove('hidden');
+    panel.classList.add('animate-fade-in');
+
+    const username = sessionStorage.getItem('admin_user') || 'admin';
+    const userDisplay = document.getElementById('activeAdminUser');
+    if (userDisplay) userDisplay.textContent = username;
+
+    loadEnquiries();
+}
+
+async function loginAdmin(e) {
+    e.preventDefault();
+
+    const userInput = document.getElementById('adminUser');
+    const passInput = document.getElementById('adminPass');
+    const btn = document.getElementById('loginBtn');
+
+    const username = userInput.value.trim();
+    const password = passInput.value.trim();
+
+    if (!username || !password) {
+        showLoginAlert("Please enter both username and password.", "error");
+        return;
+    }
+
+    // Set button loading state
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Verifying...`;
+    hideLoginAlert();
+
+    try {
+        const res = await fetch('api/login.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+
+        // Read response text first to safeguard against unformatted HTML error pages
+        const rawText = await res.text();
+        let data;
+
+        try {
+            data = JSON.parse(rawText);
+        } catch (jsonErr) {
+            // Extract clean title or slice text if an unexpected HTML page is returned (e.g., 404 or 500)
+            const htmlTitle = rawText.match(/<title>(.*?)<\/title>/i)?.[1];
+            const cleanErr = htmlTitle || rawText.replace(/<[^>]*>?/gm, '').trim().substring(0, 120);
+            throw new Error("API formatting error: " + (cleanErr || "Invalid response from server"));
+        }
+
+        if (res.ok && data.status === 'success') {
+            sessionStorage.setItem('admin_logged_in', 'true');
+            sessionStorage.setItem('admin_user', data.user?.username || username);
+            if (data.token) {
+                sessionStorage.setItem('admin_token', data.token);
+            }
+
+            showLoginAlert("Login successful! Redirecting...", "success");
+            setTimeout(() => {
+                showAdminPanel();
+            }, 300);
+        } else {
+            const errorMsg = data.message || "Invalid Username or Password.";
+            showLoginAlert(errorMsg, "error");
+            passInput.value = '';
+            passInput.focus();
+        }
+    } catch (err) {
+        showLoginAlert(err.message || "Connection failed. Please check network/server status.", "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-right-to-bracket"></i> <span>Login to Dashboard</span>`;
+    }
+}
+
+async function uploadProduct(e) {
+    e.preventDefault();
+    const btn = document.getElementById('productSubmitBtn');
+    const originalText = btn.innerHTML;
+
+    const formData = new FormData();
+    formData.append('title', document.getElementById('pTitle').value.trim());
+    formData.append('category', document.getElementById('pCategory').value);
+    formData.append('description', document.getElementById('pDesc').value.trim());
+    formData.append('image', document.getElementById('pImage').files[0]);
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Uploading...`;
+
+    try {
+        const res = await fetch('api/products.php', { method: 'POST', body: formData });
+        const rawText = await res.text();
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch {
+            throw new Error("Invalid response from server when uploading.");
+        }
+
+        if (data.status === 'success') {
+            alert('Product uploaded successfully!');
+            document.getElementById('productForm').reset();
+        } else {
+            alert('Upload failed: ' + (data.message || 'Unknown error'));
+        }
+    } catch (err) {
+        alert("Upload error: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+async function loadEnquiries() {
+    const table = document.getElementById('enquiryTable');
+    const countBadge = document.getElementById('enquiryCount');
+
+    try {
+        const res = await fetch('api/enquiries.php');
+        const rawText = await res.text();
+        let result;
+        try {
+            result = JSON.parse(rawText);
+        } catch {
+            throw new Error("Unable to parse enquiries JSON response.");
+        }
+
+        table.innerHTML = '';
+
+        if (!result.data || result.data.length === 0) {
+            countBadge.textContent = '0 enquiries';
+            table.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400">No customer enquiries submitted yet.</td></tr>`;
+            return;
+        }
+
+        countBadge.textContent = `${result.data.length} enquiries`;
+
+        result.data.forEach(item => {
+            const customerName = escapeHtml(item.customer_name || 'Anonymous');
+            const phone = escapeHtml(item.phone || '-');
+            const altPhone = item.alt_phone ? `<br><span class="text-slate-400">Alt: ${escapeHtml(item.alt_phone)}</span>` : '';
+            const email = item.email ? `<br><span class="text-slate-400 text-[11px]">${escapeHtml(item.email)}</span>` : '';
+            const productName = escapeHtml(item.product_name || 'General Product');
+            const productType = item.product_type ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 font-semibold uppercase">${escapeHtml(item.product_type)}</span>` : '';
+            const specs = escapeHtml(item.specifications || 'Standard specifications');
+            const address = escapeHtml(item.address || 'Address not provided');
+            const pincode = item.pincode ? ` - ${escapeHtml(item.pincode)}` : '';
+
+            table.innerHTML += `
+                <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                    <td class="p-3 align-top">
+                        <div class="font-bold text-slate-800">${customerName}</div>
+                        <div class="text-slate-600 font-mono mt-0.5">${phone}</div>
+                        ${altPhone}
+                        ${email}
+                    </td>
+                    <td class="p-3 align-top">
+                        <div class="font-bold text-amber-800">${productName}</div>
+                        <div class="mt-1">${productType}</div>
+                    </td>
+                    <td class="p-3 align-top">
+                        <div class="bg-amber-50/70 border border-amber-200/50 p-2 rounded-lg text-slate-700 max-w-xs break-words">
+                            ${specs}
+                        </div>
+                    </td>
+                    <td class="p-3 align-top text-slate-600 max-w-xs break-words">
+                        <div>${address}${pincode}</div>
+                        <div class="text-[10px] text-slate-400 mt-1">${item.created_at ? new Date(item.created_at).toLocaleString() : ''}</div>
+                    </td>
+                    <td class="p-3 align-top text-right whitespace-nowrap">
+                        <button onclick="deleteEnquiry(${item.id})" title="Delete enquiry"
+                            class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 p-2 rounded-lg transition">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (err) {
+        console.error("Error loading enquiries:", err);
+        table.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-rose-500 font-medium">Failed to load enquiries: ${err.message}</td></tr>`;
+    }
+}
+
+async function deleteEnquiry(id) {
+    if (!confirm('Are you sure you want to delete this enquiry record?')) return;
+
+    try {
+        const res = await fetch(`api/enquiries.php?id=${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.status === 'success') {
+            loadEnquiries();
+        } else {
+            alert('Failed to delete: ' + (data.message || 'Unknown error'));
+        }
+    } catch (err) {
+        alert("Delete failed: " + err.message);
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function logout() {
+    sessionStorage.removeItem('admin_logged_in');
+    sessionStorage.removeItem('admin_user');
+    sessionStorage.removeItem('admin_token');
+    location.reload();
+}
+</script>
+</body>
+</html>
